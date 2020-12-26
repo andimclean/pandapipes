@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "pandapipes",
+  "version": "${version}",
+  "name": "Panda Pipes",
+  "description": "Add pipes to minecraft",
+  "authors": [
+    "PandaGrove"
+  ],
+  "contributors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/pandapipes/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "PandaPipesMod.PandaPipesMod"
+    ],
+    "client": [],
+    "server": []
+  },
+  "mixins": [
+    "pandapipes.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.10.8",
+    "fabric": "*"
+  }
+}

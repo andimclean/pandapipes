@@ -1,0 +1,30 @@
+{
+	"credit": "Made with Blockbench",
+	"parent": "pandapipe",
+	"textures": {
+		"2": "block/anvil",
+		"4": "block/light_gray_concrete_powder"
+	},
+	"elements": [
+		{
+			"from": [11, 5, 5],
+			"to": [12, 11, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [24, 7, 15]},
+			"faces": {
+				"north": {"uv": [0, 0, 1, 6], "texture": "#2"},
+				"east": {"uv": [0, 0, 6, 6], "texture": "#2"},
+				"south": {"uv": [0, 1.5, 1, 7.5], "texture": "#2"},
+				"west": {"uv": [9, 6, 15, 12], "texture": "#4"},
+				"up": {"uv": [0, 0, 1, 6], "texture": "#2"},
+				"down": {"uv": [0, 0, 6, 1], "texture": "#2"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "group",
+			"origin": [19, 12, 8],
+			"children": [0]
+		}
+	]
+}
