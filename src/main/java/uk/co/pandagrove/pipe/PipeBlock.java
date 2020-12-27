@@ -8,7 +8,6 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.InventoryProvider;
-import net.minecraft.block.PaneBlock;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
