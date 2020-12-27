@@ -19,3 +19,10 @@ bin/
 
 #fabric
 run/
+.mixin.out/
+config/fabric/indigo-renderer.properties
+logs/
+saves/
+crash-reports/
+options.txt
+usercache.json

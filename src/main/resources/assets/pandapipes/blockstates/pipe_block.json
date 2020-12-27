@@ -1,0 +1,22 @@
+{
+  "multipart": [
+    { "when": { "facing": "up" }, "apply": { "model": "pandapipes:block/input_ring_top" } },
+    { "when": { "connected_top": "true" }, "apply": { "model": "pandapipes:block/connector_top", "y": 0, "uvlock": true } },
+    { "when": { "connected_top": "false" }, "apply": { "model": "pandapipes:block/blanking_top", "y": 0, "uvlock": true } },
+    { "when": { "facing": "down" }, "apply": { "model": "pandapipes:block/input_ring_bottom" } },
+    { "when": { "connected_bottom": "true" }, "apply": { "model": "pandapipes:block/connector_bottom", "y": 0, "uvlock": true } },
+    { "when": { "connected_bottom": "false" }, "apply": { "model": "pandapipes:block/blanking_bottom", "y": 0, "uvlock": true } },
+    { "when": { "facing": "north" }, "apply": { "model": "pandapipes:block/input_ring", "y": 180 } },
+    { "when": { "connected_north": "true" }, "apply": { "model": "pandapipes:block/connector", "y": 270, "uvlock": true } },
+    { "when": { "connected_north": "false" }, "apply": { "model": "pandapipes:block/blanking", "y": 270, "uvlock": true } },
+    { "when": { "facing": "east" }, "apply": { "model": "pandapipes:block/input_ring", "y": 270 } },
+    { "when": { "connected_east": "true" }, "apply": { "model": "pandapipes:block/connector", "y": 0, "uvlock": true } },
+    { "when": { "connected_east": "false" }, "apply": { "model": "pandapipes:block/blanking", "y": 0, "uvlock": true } },
+    { "when": { "facing": "south" }, "apply": { "model": "pandapipes:block/input_ring", "y": 0 } },
+    { "when": { "connected_south": "true" }, "apply": { "model": "pandapipes:block/connector", "y": 90, "uvlock": true } },
+    { "when": { "connected_south": "false" }, "apply": { "model": "pandapipes:block/blanking", "y": 90, "uvlock": true } },
+    { "when": { "facing": "west" }, "apply": { "model": "pandapipes:block/input_ring", "y": 90 } },
+    { "when": { "connected_west": "true" }, "apply": { "model": "pandapipes:block/connector", "y": 180, "uvlock": true } },
+    { "when": { "connected_west": "false" }, "apply": { "model": "pandapipes:block/blanking", "y": 180, "uvlock": true } }
+  ]
+}

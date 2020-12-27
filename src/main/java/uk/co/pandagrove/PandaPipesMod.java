@@ -16,8 +16,7 @@ public class PandaPipesMod implements ModInitializer {
     @Override
     public void onInitialize() {
         log(Level.INFO, "Initializing");
-        PandaRe
-        
+        PandaRegistry.onInit();
     }
 
     public static void log(Level level, String message){
