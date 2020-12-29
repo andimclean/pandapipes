@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.InventoryProvider;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
@@ -28,7 +29,7 @@ import net.minecraft.world.WorldAccess;
 import uk.co.pandagrove.PandaPipesMod;
 
 
-public class PipeBlock extends Block {
+public class PipeBlock extends BlockWithEntity {
 
     public static final DirectionProperty FACING = Properties.FACING;
     public static final BooleanProperty CONNECTED_TOP = BooleanProperty.of("connected_top");
@@ -125,20 +126,17 @@ public class PipeBlock extends Block {
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
         if (itemStack.hasCustomName()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
-            /*if (blockEntity instanceof HopperPlusBlockEntity) {
-                ((HopperPlusBlockEntity) blockEntity).setCustomName(itemStack.getName());
-            }*/
+            if (blockEntity instanceof PipeEntity) {
+                ((PipeEntity) blockEntity).setCustomName(itemStack.getName());
+            }
         }
-        log(Level.INFO, state.toString());
-
     }
-/*
+
 	@Override
 	public BlockEntity createBlockEntity(BlockView world) {
-       // TODO Auto-generated method stub
-	   return null;
+	   return new PipeEntity();
     }
-*/
+
     public BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.MODEL;
     }
