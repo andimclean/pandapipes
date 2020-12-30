@@ -1,12 +1,24 @@
 package uk.co.pandagrove.pipe;
 
-import org.apache.logging.log4j.Level;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Supplier;
 
+import org.apache.logging.log4j.Level;
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
+import net.minecraft.block.InventoryProvider;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
@@ -15,12 +27,17 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Tickable;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import uk.co.pandagrove.PandaPipesMod;
 import uk.co.pandagrove.PandaRegistry;
 
 public class PipeEntity extends  LockableContainerBlockEntity implements Tickable, SidedInventory {
 
 	private DefaultedList<ItemStack> inventory;
+	private int transferCooldown;
+	private long lasTickTime;
+	private int maxCooldown = 8;
 	
     public PipeEntity() {
 		super(PandaRegistry.PIPE_BLOCK_ENTITY);
@@ -83,8 +100,10 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 	@Override
 	public boolean canInsert(int slot, ItemStack stack, Direction dir) {		
         Direction facing = this.getWorld().getBlockState(this.pos).get(PipeBlock.FACING);
-        // PandaPipesMod.log(Level.INFO, "Can Insert: Facing = " + facing.toString()+ ", direction+ " + dir.toString());
-		return facing == dir;
+         PandaPipesMod.log(Level.INFO, "Can Insert: Facing = " + facing.toString()+ ", direction: " + dir.toString());        
+
+		return facing == dir && 
+              canMergeItems( this.getInvStackList().get(slot), stack);        
 	}
 
 	@Override
@@ -96,8 +115,207 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 
 	@Override
 	public void tick() {
-		// PandaPipesMod.log(Level.INFO, "Tick");
+		if (this.world != null && !this.world.isClient) {
+            --this.transferCooldown;
+            if (this.transferCooldown > -1) {
+                this.lasTickTime = this.world.getTime();
+            }
+            if (!this.needsCooldown()){
+                this.setCooldown(0);
+                this.insertAndExtract( () -> extract(this));
+            }
+        }
 		
+	}
+
+    private List<DirectionInventory> getOutInventories() {
+        
+        List<DirectionInventory> inventories = new ArrayList<DirectionInventory>();
+        BlockState state = this.getCachedState();
+        Object facing = state.get(PipeBlock.FACING);
+
+        if (facing != PipeBlock.CONNECTED_BOTTOM && state.get(PipeBlock.CONNECTED_BOTTOM)){
+            addInventory(inventories, this.pos.down(), Direction.DOWN);
+        }
+    
+        if (facing != PipeBlock.CONNECTED_NORTH && state.get(PipeBlock.CONNECTED_NORTH)){
+            addInventory(inventories, this.pos.north(), Direction.NORTH);
+        }
+
+        if (facing != PipeBlock.CONNECTED_EAST && state.get(PipeBlock.CONNECTED_EAST)){
+            addInventory(inventories, this.pos.east(), Direction.EAST);
+        }
+
+        if (facing != PipeBlock.CONNECTED_SOUTH && state.get(PipeBlock.CONNECTED_SOUTH)){
+            addInventory(inventories, this.pos.south(), Direction.SOUTH);
+        }
+
+        if (facing != PipeBlock.CONNECTED_WEST && state.get(PipeBlock.CONNECTED_WEST)){
+            addInventory(inventories, this.pos.west(), Direction.WEST);
+        }
+
+        if (facing != PipeBlock.CONNECTED_TOP && state.get(PipeBlock.CONNECTED_TOP)){
+            addInventory(inventories, this.pos.up(), Direction.UP);
+        }
+
+
+        return inventories;
+
+    }
+	private void addInventory(List<DirectionInventory> inventories, BlockPos pos, Direction dir) {
+        
+        BlockState state = world.getBlockState(pos);
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        Block block = state.getBlock();
+
+        PandaPipesMod.log(Level.INFO,"Getting block for " + dir + " is block " + block + "State:" + state + " pos " + pos);
+        
+        if ( block instanceof InventoryProvider) {
+            inventories.add( new DirectionInventory(((InventoryProvider) block).getInventory(state, world, pos), dir));
+        }
+        else if ( blockEntity instanceof Inventory) {
+            Inventory inve = (Inventory)blockEntity;
+            if (inve instanceof ChestBlockEntity && block instanceof ChestBlock ) {
+                inventories.add(new DirectionInventory(ChestBlock.getInventory((ChestBlock) block, state, world, pos, true), dir));
+            }
+            if (block instanceof PipeBlock && (state.get(PipeBlock.FACING) == dir.getOpposite())){
+                PandaPipesMod.log(Level.INFO,"Adding in a pipe inventory");
+                inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite()));
+            }
+        } 
+	}
+
+    private boolean insert() {
+        ItemStack ourStack = this.getInvStackList().get(0);      
+        List<DirectionInventory> inventories = getOutInventories();
+        PandaPipesMod.log(Level.INFO, "Trying to insert inventory " + inventories.size());
+        
+        if (inventories.size()>0) {
+            Inventory inv = inventories.get(0).getInventory();
+            Direction side = inventories.get(0).getDirection();
+
+            if (inv != null && ourStack.getCount() > 0){
+                if (inv instanceof SidedInventory) {
+                    PandaPipesMod.log(Level.INFO, "Got a sided inventory");
+                    int[] slots = ((SidedInventory)inv).getAvailableSlots(side);
+                    for (int slot: slots) {
+                        PandaPipesMod.log(Level.INFO, "Trying slot " + slot);
+                        if (transfer(ourStack, inv,slot,side)){
+                            PandaPipesMod.log(Level.INFO, "Added to slot " + slot);
+                            return true;
+                        }
+                    }
+                } else {
+                    PandaPipesMod.log(Level.INFO, "Got a normal inventory");
+                    int size = inv.size();
+                    for( int slot = 0; slot < size; slot +=1) {
+                        PandaPipesMod.log(Level.INFO, "Trying slot " + slot);
+                        if (transfer(ourStack, inv,slot,side)) {
+                            PandaPipesMod.log(Level.INFO, "Added to slot " + slot);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean transfer(ItemStack from, Inventory to, int slot, @Nullable Direction direction) {        
+        ItemStack slotStack = to.getStack(slot);
+        if ( canInsert(to, from, slot, direction)){
+            PandaPipesMod.log(Level.INFO, "Adding into slot " + slotStack.toString());
+            
+            if (slotStack.isEmpty()) {
+                PandaPipesMod.log(Level.INFO, "To slot is empty");
+                slotStack = new ItemStack(from.getItem());
+                PandaPipesMod.log(Level.INFO, "New stack item = " + from.getItem());
+            } else {
+                slotStack = slotStack.copy();
+                slotStack.increment(1);
+            }
+            from.decrement(1);
+            PandaPipesMod.log(Level.INFO, "Setting inventory to " + slotStack.getItem().toString());
+            to.setStack(slot, slotStack);
+            this.inventory.set(0, from);
+            this.markDirty();
+            this.setCooldown(maxCooldown);
+            to.markDirty();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean canInsert(Inventory inventory, ItemStack stack, int slot, Direction dir) {
+        if (!inventory.isValid(slot, stack)) {
+            return false;
+        } else if ( !(inventory instanceof SidedInventory) || ((SidedInventory)inventory).canInsert(slot, stack, dir)) {
+            return canMergeItems(inventory.getStack(slot), stack);
+
+        }
+        return false;            
+    }
+
+    private static boolean canMergeItems(ItemStack to, ItemStack from) {
+        if (to.isEmpty()) {
+            return true;
+        } else if (to.getItem() != from.getItem()) {
+            return false;
+        } else if (to.getDamage() != from.getDamage()) {
+            return false;
+        } else if (to.getCount() >= to.getMaxCount()) {
+            return false;
+        } else {
+            return ItemStack.areTagsEqual(to, from);
+        }
+    }
+    
+	private boolean extract(PipeEntity pipeEntity) {
+        
+		return false;
+	}
+
+	private void insertAndExtract(Supplier<Boolean> extractMethod) {
+        if (this.world != null && !this.world.isClient && !this.needsCooldown()) {
+            PandaPipesMod.log(Level.INFO, "Inventory " + this.inventory.toString()+ " pos " +this.pos);
+            boolean bl = false;
+            if (!isEmpty()) {                
+                bl = insert();
+            }
+            if (!this.isFull()) {
+             bl |= extractMethod.get();  
+            }
+
+            if (bl) {
+                this.setCooldown(maxCooldown);
+                this.markDirty();
+            }
+        }
+    }
+    
+
+    private boolean isFull() {
+        Iterator<ItemStack> inventoryIterator = this.inventory.iterator();
+
+        ItemStack itemStack;
+        do {
+            if (!inventoryIterator.hasNext()) {
+                return true;
+            }
+
+            itemStack = inventoryIterator.next();
+        } while (!itemStack.isEmpty() && itemStack.getCount() == itemStack.getMaxCount());
+
+        return false;
+    }
+
+	private void setCooldown(int coolDown) {
+        this.transferCooldown = coolDown;
+	}
+
+	private boolean needsCooldown() {
+        //PandaPipesMod.log(Level.INFO, "Cooldown = " + transferCooldown);
+		return this.transferCooldown > 0;
 	}
 
 	@Override
