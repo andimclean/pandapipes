@@ -14,6 +14,7 @@ import net.minecraft.block.ChestBlock;
 import net.minecraft.block.InventoryProvider;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -36,14 +37,13 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 
 	private DefaultedList<ItemStack> inventory;
 	private int transferCooldown;
-	private long lasTickTime;
+	protected long lasTickTime;
 	private int maxCooldown = 8;
 	
     public PipeEntity() {
 		super(PandaRegistry.PIPE_BLOCK_ENTITY);
         this.inventory = DefaultedList.ofSize(1, ItemStack.EMPTY);
-    }
-    
+    }  
 	@Override
 	public int size() {
 		return this.inventory.size();
@@ -71,7 +71,9 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 
 	@Override
 	public void setStack(int slot, ItemStack stack) {
+        //PandaPipesMod.log(Level.INFO, "Setting stack");
         this.getInvStackList().set(slot, stack);
+        //this.setCooldown( this.maxCooldown);
         if (stack.getCount() > this.getMaxCountPerStack()) {
             stack.setCount(this.getMaxCountPerStack());
         }		
@@ -100,9 +102,9 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 	@Override
 	public boolean canInsert(int slot, ItemStack stack, Direction dir) {		
         Direction facing = this.getWorld().getBlockState(this.pos).get(PipeBlock.FACING);
-         PandaPipesMod.log(Level.INFO, "Can Insert: Facing = " + facing.toString()+ ", direction: " + dir.toString());        
+        //PandaPipesMod.log(Level.INFO, "Can Insert: Facing = " + facing.toString()+ ", direction: " + dir.toString());        
 
-		return facing == dir && 
+		return facing == dir && !this.needsCooldown() && 
               canMergeItems( this.getInvStackList().get(slot), stack);        
 	}
 
@@ -123,6 +125,8 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
             if (!this.needsCooldown()){
                 this.setCooldown(0);
                 this.insertAndExtract( () -> extract(this));
+            } else {
+                //PandaPipesMod.log(Level.INFO, "Waiting for cooldown " + this.transferCooldown);
             }
         }
 		
@@ -134,27 +138,29 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
         BlockState state = this.getCachedState();
         Object facing = state.get(PipeBlock.FACING);
 
-        if (facing != PipeBlock.CONNECTED_BOTTOM && state.get(PipeBlock.CONNECTED_BOTTOM)){
+        
+
+        if (facing != Direction.DOWN && state.get(PipeBlock.CONNECTED_BOTTOM)){
             addInventory(inventories, this.pos.down(), Direction.DOWN);
         }
     
-        if (facing != PipeBlock.CONNECTED_NORTH && state.get(PipeBlock.CONNECTED_NORTH)){
+        if (facing != Direction.NORTH && state.get(PipeBlock.CONNECTED_NORTH)){
             addInventory(inventories, this.pos.north(), Direction.NORTH);
         }
 
-        if (facing != PipeBlock.CONNECTED_EAST && state.get(PipeBlock.CONNECTED_EAST)){
+        if (facing != Direction.EAST && state.get(PipeBlock.CONNECTED_EAST)){
             addInventory(inventories, this.pos.east(), Direction.EAST);
         }
 
-        if (facing != PipeBlock.CONNECTED_SOUTH && state.get(PipeBlock.CONNECTED_SOUTH)){
+        if (facing != Direction.SOUTH && state.get(PipeBlock.CONNECTED_SOUTH)){
             addInventory(inventories, this.pos.south(), Direction.SOUTH);
         }
 
-        if (facing != PipeBlock.CONNECTED_WEST && state.get(PipeBlock.CONNECTED_WEST)){
+        if (facing != Direction.WEST && state.get(PipeBlock.CONNECTED_WEST)){
             addInventory(inventories, this.pos.west(), Direction.WEST);
         }
 
-        if (facing != PipeBlock.CONNECTED_TOP && state.get(PipeBlock.CONNECTED_TOP)){
+        if (facing != Direction.UP && state.get(PipeBlock.CONNECTED_TOP)){
             addInventory(inventories, this.pos.up(), Direction.UP);
         }
 
@@ -174,25 +180,25 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
             inventories.add( new DirectionInventory(((InventoryProvider) block).getInventory(state, world, pos), dir));
         }
         else if ( blockEntity instanceof Inventory) {
+            
             Inventory inve = (Inventory)blockEntity;
             if (inve instanceof ChestBlockEntity && block instanceof ChestBlock ) {
                 inventories.add(new DirectionInventory(ChestBlock.getInventory((ChestBlock) block, state, world, pos, true), dir));
-            }
-            if (block instanceof PipeBlock && (state.get(PipeBlock.FACING) == dir.getOpposite())){
+            } else if (block instanceof PipeBlock && (state.get(PipeBlock.FACING) == dir.getOpposite())){
                 PandaPipesMod.log(Level.INFO,"Adding in a pipe inventory");
                 inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite()));
+            } else if (blockEntity instanceof HopperBlockEntity){
+                PandaPipesMod.log(Level.INFO,"Have a block Inventory" + blockEntity.getClass());
+                inventories.add(new DirectionInventory((Inventory) blockEntity, dir));
             }
         } 
 	}
 
     private boolean insert() {
-        ItemStack ourStack = this.getInvStackList().get(0);      
-        List<DirectionInventory> inventories = getOutInventories();
-        PandaPipesMod.log(Level.INFO, "Trying to insert inventory " + inventories.size());
-        
-        if (inventories.size()>0) {
-            Inventory inv = inventories.get(0).getInventory();
-            Direction side = inventories.get(0).getDirection();
+        ItemStack ourStack = getInvStackList().get(0);
+        for( DirectionInventory di : getOutInventories()) {        
+            Inventory inv = di.getInventory();
+            Direction side = di.getDirection();
 
             if (inv != null && ourStack.getCount() > 0){
                 if (inv instanceof SidedInventory) {
@@ -224,7 +230,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
     private boolean transfer(ItemStack from, Inventory to, int slot, @Nullable Direction direction) {        
         ItemStack slotStack = to.getStack(slot);
         if ( canInsert(to, from, slot, direction)){
-            PandaPipesMod.log(Level.INFO, "Adding into slot " + slotStack.toString());
+            PandaPipesMod.log(Level.INFO, "Adding into slot " + slotStack.toString() +" " + direction);
             
             if (slotStack.isEmpty()) {
                 PandaPipesMod.log(Level.INFO, "To slot is empty");
@@ -238,9 +244,12 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
             PandaPipesMod.log(Level.INFO, "Setting inventory to " + slotStack.getItem().toString());
             to.setStack(slot, slotStack);
             this.inventory.set(0, from);
-            this.markDirty();
-            this.setCooldown(maxCooldown);
+            this.markDirty();            
             to.markDirty();
+
+            if (to instanceof PipeEntity) {
+               ((PipeEntity)to).setCooldown(((PipeEntity) to).maxCooldown);
+            }
             return true;
         }
         return false;
@@ -280,7 +289,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
             PandaPipesMod.log(Level.INFO, "Inventory " + this.inventory.toString()+ " pos " +this.pos);
             boolean bl = false;
             if (!isEmpty()) {                
-                bl = insert();
+                bl |= insert();
             }
             if (!this.isFull()) {
              bl |= extractMethod.get();  
@@ -310,6 +319,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
     }
 
 	private void setCooldown(int coolDown) {
+        //PandaPipesMod.log(Level.INFO, "Setting cooldown");
         this.transferCooldown = coolDown;
 	}
 
