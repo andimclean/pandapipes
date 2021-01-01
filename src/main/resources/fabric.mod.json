@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "pandapipes",
-  "version": "${version}",
+  "version": "0.1.0",
   "name": "Panda Pipes",
   "description": "Add pipes to minecraft",
   "authors": ["PandaGrove"],
@@ -12,7 +12,7 @@
   "environment": "*",
   "entrypoints": {
     "main": ["uk.co.pandagrove.PandaPipesMod"],
-    "client": [],
+    "client": ["uk.co.pandagrove.PandaPipesClientMod"],
     "server": []
   },
   "mixins": ["pandapipes.mixins.json"],

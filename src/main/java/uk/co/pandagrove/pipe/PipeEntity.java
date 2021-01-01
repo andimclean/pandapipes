@@ -38,7 +38,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 	private DefaultedList<ItemStack> inventory;
 	private int transferCooldown;
 	protected long lasTickTime;
-	private int maxCooldown = 8;
+	private int maxCooldown = 6;
 	
     public PipeEntity() {
 		super(PandaRegistry.PIPE_BLOCK_ENTITY);
@@ -335,10 +335,15 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 
 	@Override
 	protected ScreenHandler createScreenHandler(int syncId, PlayerInventory playerInventory) {
-		// TODO Auto-generated method stub
-		return null;
+		return new PipeScreenHandler(syncId, playerInventory, this);
 	}
 
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+        //We provide *this* to the screenHandler as our class Implements Inventory
+        //Only the Server has the Inventory at the start, this will be synced to the client in the ScreenHandler
+        return new PipeScreenHandler(syncId, playerInventory, this);
+    }
     protected DefaultedList<ItemStack> getInvStackList() {
         return this.inventory;
     }
