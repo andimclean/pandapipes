@@ -26,6 +26,8 @@ public class PipeScreenHandler extends ScreenHandler {
 
         this.addSlot(new Slot(inventory, 0, 80,14));
 
+        this.addSlot(new FilteredSlot(inventory, 1, 80, 41));
+
         // The player Inventory
         for(y = 0; y < 3; y+=1) {
             for (x =0; x< 9; x+=1) {
@@ -76,7 +78,7 @@ public class PipeScreenHandler extends ScreenHandler {
         Slot slot = this.slots.get(invSlot);
         if (slot != null && slot.hasStack()) {
             ItemStack originalStack = slot.getStack();
-            newStack = originalStack.copy();
+            //newStack = originalStack.copy();
             if (invSlot < this.inventory.size()) {
                 if (!this.insertItem(originalStack, this.inventory.size(), this.slots.size(), true)) {
                     return ItemStack.EMPTY;
