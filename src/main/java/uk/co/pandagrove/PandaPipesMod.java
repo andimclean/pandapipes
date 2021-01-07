@@ -7,8 +7,6 @@ import net.minecraft.util.Identifier;
 import uk.co.pandagrove.pipe.PipeBlock;
 import uk.co.pandagrove.pipe.PipeScreenHandler;
 
-import java.nio.channels.Pipe;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +28,7 @@ public class PandaPipesMod implements ModInitializer {
     }
 
     public static void log(Level level, String message){
-    //  LOGGER.log(level, "["+MOD_NAME+"] " + message);
+      LOGGER.log(level, "["+MOD_NAME+"] " + message);
     }
 
 }

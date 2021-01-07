@@ -1,6 +1,7 @@
 package uk.co.pandagrove.pipe;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
@@ -25,6 +26,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -35,10 +37,10 @@ import net.minecraft.util.math.Direction;
 import uk.co.pandagrove.PandaPipesMod;
 import uk.co.pandagrove.PandaRegistry;
 
-public class PipeEntity extends  LockableContainerBlockEntity implements Tickable, SidedInventory {
+public class PipeEntity extends  LockableContainerBlockEntity implements Tickable, SidedInventory, Comparator<DirectionInventory> {
 
     private static final int NumSlots = 1;
-    private static final int NumFilters = 1;
+   // private static final int NumFilters = 1;
     private static final int InventoryStart = 0;
     private static final int FilterStart = InventoryStart + NumSlots;
 
@@ -127,7 +129,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 
         Item filterItem = this.filters.get(0).getItem();
         if (filterItem != null && filterItem != Items.AIR && filterItem != stack.getItem()) {
-            PandaPipesMod.log(Level.INFO, "Can't insert item " + stack.getItem() + " as it's not " + filterItem);
+            //PandaPipesMod.log(Level.INFO, "Can't insert item " + stack.getItem() + " as it's not " + filterItem);
             return false;
         } 
 		return facing == dir && !this.needsCooldown() && 
@@ -152,7 +154,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
                 this.setCooldown(0);
                 this.insertAndExtract( () -> extract(this));
             } else {
-                //PandaPipesMod.log(Level.INFO, "Waiting for cooldown " + this.transferCooldown);
+                // PandaPipesMod.log(Level.INFO, "Waiting for cooldown " + this.transferCooldown);
             }
         }
 		
@@ -203,26 +205,32 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
         // PandaPipesMod.log(Level.INFO,"Getting block for " + dir + " is block " + block + "State:" + state + " pos " + pos);
         
         if ( block instanceof InventoryProvider) {
-            inventories.add( new DirectionInventory(((InventoryProvider) block).getInventory(state, world, pos), dir));
+            // PandaPipesMod.log(Level.INFO,"Have a InventoryProvider" + blockEntity.getClass());
+            inventories.add( new DirectionInventory(((InventoryProvider) block).getInventory(state, world, pos), dir, 0));
         }
         else if ( blockEntity instanceof Inventory) {
             
             Inventory inve = (Inventory)blockEntity;
             if (inve instanceof ChestBlockEntity && block instanceof ChestBlock ) {
-                inventories.add(new DirectionInventory(ChestBlock.getInventory((ChestBlock) block, state, world, pos, true), dir));
+                inventories.add(new DirectionInventory(ChestBlock.getInventory((ChestBlock) block, state, world, pos, true), dir,10));
             } else if (block instanceof PipeBlock && (state.get(PipeBlock.FACING) == dir.getOpposite())){
                 // PandaPipesMod.log(Level.INFO,"Adding in a pipe inventory");
-                inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite()));
+                if (((PipeEntity) blockEntity).hasFilter() ) {
+                    inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite(),100));
+                } else {
+                inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite(),90));}
             } else if (blockEntity instanceof HopperBlockEntity){
-               //  PandaPipesMod.log(Level.INFO,"Have a block Inventory" + blockEntity.getClass());
-                inventories.add(new DirectionInventory((Inventory) blockEntity, dir));
+               PandaPipesMod.log(Level.INFO,"Have a block Inventory" + blockEntity.getClass());
+                inventories.add(new DirectionInventory((Inventory) blockEntity, dir,100));
             }
         } 
 	}
 
     private boolean insert() {
         ItemStack ourStack = getInvStackList().get(0);
-        for( DirectionInventory di : getOutInventories()) {        
+        List<DirectionInventory> inventories = getOutInventories();
+        inventories.sort(this);
+        for( DirectionInventory di : inventories) {        
             Inventory inv = di.getInventory();
             Direction side = di.getDirection();
 
@@ -374,15 +382,33 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
         return this.inventory;
     }
 
+    protected boolean hasFilter() {
+        return this.filters.get(0).getCount() > 0;
+    }
+
     public void fromTag(BlockState state, CompoundTag tag) {
         super.fromTag(state, tag);
         this.inventory = DefaultedList.ofSize(this.size(), ItemStack.EMPTY);
-        Inventories.fromTag(tag, this.inventory);        
+        Inventories.fromTag(tag, this.inventory);
+        Tag items = tag.get("Items");
+        Tag filters = tag.get("Filters");
+        tag.put("Items", filters);
+        Inventories.fromTag(tag, this.filters);
+        tag.put("Items", items);
     }
     
     public CompoundTag toTag(CompoundTag tag) {
         super.toTag(tag);
+        Inventories.toTag(tag, this.filters);
+        Tag filters = tag.get("Items");
+        tag.put("Filters", filters);
+        tag.remove("Items");
         Inventories.toTag(tag, this.inventory);
         return tag;
     }
+
+	@Override
+	public int compare(DirectionInventory fst, DirectionInventory snd) {	
+        return fst.compareTo(snd);
+	}
 }

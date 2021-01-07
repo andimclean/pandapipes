@@ -6,16 +6,27 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.util.math.Direction;
 import uk.co.pandagrove.PandaPipesMod;
 
-public class DirectionInventory {
+
+public class DirectionInventory implements Comparable<DirectionInventory> {
 
 	private Direction direction;
-	private Inventory inventory;
+    private Inventory inventory;
+    private int priority;
 
-	public DirectionInventory(Inventory inventory, Direction dir){
-        PandaPipesMod.log(Level.INFO,"Adding Inventory for " + dir);
+	public DirectionInventory(Inventory inventory, Direction dir, int priority){
+        PandaPipesMod.log(Level.INFO,"Adding Inventory for " + dir + " priority " + priority);
         this.setInventory(inventory);
         this.setDirection(dir);
+        this.setPriority(priority);
         
+	}
+
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
 	}
 
 	public Direction getDirection() {
@@ -32,6 +43,11 @@ public class DirectionInventory {
 
 	private void setInventory(Inventory inventory) {
 		this.inventory = inventory;
+	}
+
+	@Override
+	public int compareTo(DirectionInventory other) {		
+		return other.priority - this.priority;
 	}
 
 }
