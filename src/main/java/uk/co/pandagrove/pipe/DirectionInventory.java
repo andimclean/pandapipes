@@ -14,7 +14,7 @@ public class DirectionInventory implements Comparable<DirectionInventory> {
     private int priority;
 
 	public DirectionInventory(Inventory inventory, Direction dir, int priority){
-        PandaPipesMod.log(Level.INFO,"Adding Inventory for " + dir + " priority " + priority);
+       // PandaPipesMod.log(Level.INFO,"Adding Inventory for " + dir + " priority " + priority);
         this.setInventory(inventory);
         this.setDirection(dir);
         this.setPriority(priority);

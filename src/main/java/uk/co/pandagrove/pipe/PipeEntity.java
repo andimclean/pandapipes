@@ -49,7 +49,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
     private DefaultedList<ItemStack> filters;
 	private int transferCooldown;
 	protected long lasTickTime;
-	private int maxCooldown = 6;
+	private int maxCooldown = 0;
 	
     public PipeEntity() {
 		super(PandaRegistry.PIPE_BLOCK_ENTITY);
@@ -359,7 +359,8 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 
 	private boolean needsCooldown() {
         //PandaPipesMod.log(Level.INFO, "Cooldown = " + transferCooldown);
-		return this.transferCooldown > 0;
+        //return this.transferCooldown > 0;
+        return false;
 	}
 
 	@Override
