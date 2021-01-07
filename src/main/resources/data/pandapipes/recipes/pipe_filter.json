@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" c ", " tr", "   "],
+  "key": {
+    "c": {
+      "item": "minecraft:comparator"
+    },
+    "r": {
+      "item": "minecraft:redstone_torch"
+    },
+    "t": {
+      "tag": "minecraft:wooden_trapdoors"
+    }
+  },
+  "result": {
+    "item": "pandapipes:pipe_filter_item",
+    "count": 6
+  }
+}
