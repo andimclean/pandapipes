@@ -49,7 +49,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
     private DefaultedList<ItemStack> filters;
 	private int transferCooldown;
 	protected long lasTickTime;
-	private int maxCooldown = 0;
+	private int maxCooldown = 8;
 	
     public PipeEntity() {
 		super(PandaRegistry.PIPE_BLOCK_ENTITY);
@@ -220,8 +220,10 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
                 } else {
                 inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite(),90));}
             } else if (blockEntity instanceof HopperBlockEntity){
-               PandaPipesMod.log(Level.INFO,"Have a block Inventory" + blockEntity.getClass());
+               // PandaPipesMod.log(Level.INFO,"Have a block Inventory" + blockEntity.getClass());
                 inventories.add(new DirectionInventory((Inventory) blockEntity, dir,100));
+            } else {
+                inventories.add(new DirectionInventory((Inventory) blockEntity, dir,20));
             }
         } 
 	}
