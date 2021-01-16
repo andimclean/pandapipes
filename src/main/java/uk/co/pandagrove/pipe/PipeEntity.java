@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.block.Block;
@@ -22,9 +21,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SidedInventory;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.screen.ScreenHandler;
@@ -34,13 +31,12 @@ import net.minecraft.util.Tickable;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import uk.co.pandagrove.PandaPipesMod;
 import uk.co.pandagrove.PandaRegistry;
 
 public class PipeEntity extends  LockableContainerBlockEntity implements Tickable, SidedInventory, Comparator<DirectionInventory> {
 
     private static final int NumSlots = 1;
-   // private static final int NumFilters = 1;
+    private static final int NumFilters = 1;
     private static final int InventoryStart = 0;
     private static final int FilterStart = InventoryStart + NumSlots;
 
@@ -53,8 +49,8 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 	
     public PipeEntity() {
 		super(PandaRegistry.PIPE_BLOCK_ENTITY);
-        this.inventory = DefaultedList.ofSize(1, ItemStack.EMPTY);
-        this.filters = DefaultedList.ofSize(1, ItemStack.EMPTY);
+        this.inventory = DefaultedList.ofSize(NumSlots, ItemStack.EMPTY);
+        this.filters = DefaultedList.ofSize(NumFilters, ItemStack.EMPTY);
     }
 
 	@Override
@@ -127,9 +123,8 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
         Direction facing = this.getWorld().getBlockState(this.pos).get(PipeBlock.FACING);
         //PandaPipesMod.log(Level.INFO, "Can Insert: Facing = " + facing.toString()+ ", direction: " + dir.toString());        
 
-        Item filterItem = this.filters.get(0).getItem();
-        if (filterItem != null && filterItem != Items.AIR && filterItem != stack.getItem()) {
-            //PandaPipesMod.log(Level.INFO, "Can't insert item " + stack.getItem() + " as it's not " + filterItem);
+        ItemStack filterStack = this.filters.get(0);
+        if (!canMergeItems(filterStack, stack)) {
             return false;
         } 
 		return facing == dir && !this.needsCooldown() && 
@@ -270,7 +265,8 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
             
             if (slotStack.isEmpty()) {
                // PandaPipesMod.log(Level.INFO, "To slot is empty");
-                slotStack = new ItemStack(from.getItem());
+                slotStack = from.copy();
+                slotStack.setCount(1);
                 // PandaPipesMod.log(Level.INFO, "New stack item = " + from.getItem());
             } else {
                 slotStack = slotStack.copy();
@@ -361,8 +357,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 
 	private boolean needsCooldown() {
         //PandaPipesMod.log(Level.INFO, "Cooldown = " + transferCooldown);
-        //return this.transferCooldown > 0;
-        return false;
+        return this.transferCooldown > 0;
 	}
 
 	@Override
