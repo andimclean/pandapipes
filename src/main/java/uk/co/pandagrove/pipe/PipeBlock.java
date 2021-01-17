@@ -125,7 +125,7 @@ public class PipeBlock extends BlockWithEntity {
 
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView view, BlockPos pos, ShapeContext context) {
-       return VoxelShapes.cuboid(0.3f, 0.3f, 0.3f, 0.7f, 0.7f, 0.7f);
+       return VoxelShapes.cuboid(0.2f, 0.2f, 0.2f, 0.8f, 0.8f, 0.8f);
    }
 
     @Override
