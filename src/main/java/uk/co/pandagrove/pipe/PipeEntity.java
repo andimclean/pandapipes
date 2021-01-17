@@ -16,6 +16,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
@@ -35,6 +36,12 @@ import uk.co.pandagrove.PandaRegistry;
 
 public class PipeEntity extends  LockableContainerBlockEntity implements Tickable, SidedInventory, Comparator<DirectionInventory> {
 
+    private static final int Chest_Priority = 10;
+    private static final int Other_Priority = 20;
+    private static final int Shulka_Priority = 90;
+    private static final int Hopper_Priority = 70;
+    private static final int Pipe_Priority = 80;
+    private static final int Filtered_Pipe_Priority = 100;
     private static final int NumSlots = 1;
     private static final int NumFilters = 1;
     private static final int InventoryStart = 0;
@@ -135,7 +142,7 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
 	public boolean canExtract(int slot, ItemStack stack, Direction dir) {
         Direction facing = this.getWorld().getBlockState(this.pos).get(PipeBlock.FACING);
         // PandaPipesMod.log(Level.INFO, "Can Extract: Facing = " + facing.toString()+ ", direction+ " + dir.toString());
-		return facing != dir;
+		return facing != dir && !this.isEmpty();
 	}
 
 	@Override
@@ -207,18 +214,22 @@ public class PipeEntity extends  LockableContainerBlockEntity implements Tickabl
             
             Inventory inve = (Inventory)blockEntity;
             if (inve instanceof ChestBlockEntity && block instanceof ChestBlock ) {
-                inventories.add(new DirectionInventory(ChestBlock.getInventory((ChestBlock) block, state, world, pos, true), dir,10));
+                inventories.add(new DirectionInventory(ChestBlock.getInventory((ChestBlock) block, state, world, pos, true), dir,Chest_Priority));
             } else if (block instanceof PipeBlock && (state.get(PipeBlock.FACING) == dir.getOpposite())){
                 // PandaPipesMod.log(Level.INFO,"Adding in a pipe inventory");
                 if (((PipeEntity) blockEntity).hasFilter() ) {
-                    inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite(),100));
+                    inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite(),Filtered_Pipe_Priority));
                 } else {
-                inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite(),90));}
+                inventories.add(new DirectionInventory((Inventory) blockEntity, dir.getOpposite(),Pipe_Priority));
+                }
             } else if (blockEntity instanceof HopperBlockEntity){
                // PandaPipesMod.log(Level.INFO,"Have a block Inventory" + blockEntity.getClass());
-                inventories.add(new DirectionInventory((Inventory) blockEntity, dir,100));
+                inventories.add(new DirectionInventory((Inventory) blockEntity, dir,Hopper_Priority));
+            } else if (blockEntity instanceof ShulkerBoxBlockEntity){
+                // PandaPipesMod.log(Level.INFO,"Have a block Inventory" + blockEntity.getClass());
+                 inventories.add(new DirectionInventory((Inventory) blockEntity, dir,Shulka_Priority));
             } else {
-                inventories.add(new DirectionInventory((Inventory) blockEntity, dir,20));
+                inventories.add(new DirectionInventory((Inventory) blockEntity, dir,Other_Priority));
             }
         } 
 	}
