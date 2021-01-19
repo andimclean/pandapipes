@@ -1,3 +1,5 @@
 {
-  "container.pandapipes.pipe": "Pipe"
+  "container.pandapipes.pipe": "Pipe",
+  "block.pandapipes.pipe_block": "Pipe",
+  "item.pandapipes.pipeitem.tooltip": ""
 }

@@ -1,10 +1,8 @@
 package uk.co.pandagrove.pipe;
 
-import org.apache.logging.log4j.Level;
-
 import net.minecraft.inventory.Inventory;
 import net.minecraft.util.math.Direction;
-import uk.co.pandagrove.PandaPipesMod;
+
 
 
 public class DirectionInventory implements Comparable<DirectionInventory> {
