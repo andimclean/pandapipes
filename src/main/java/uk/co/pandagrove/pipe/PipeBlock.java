@@ -1,6 +1,5 @@
 package uk.co.pandagrove.pipe;
 
-import org.apache.logging.log4j.Level;
 
 
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
@@ -32,8 +31,6 @@ import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
-import uk.co.pandagrove.PandaPipesMod;
-
 
 public class PipeBlock extends BlockWithEntity {
 
@@ -46,10 +43,6 @@ public class PipeBlock extends BlockWithEntity {
     public static final BooleanProperty CONNECTED_WEST = BooleanProperty.of("connected_west");
 	public static final String ID = "pipe_block";
 
-    public static void log(Level level, String message){
-        LOGGER.log(level, "["+PandaPipesMod.MOD_NAME+"] " + message);
-    }
-
 	public PipeBlock(FabricBlockSettings settings) {
         super(settings);
         this.setDefaultState(this.stateManager.getDefaultState()
@@ -60,7 +53,9 @@ public class PipeBlock extends BlockWithEntity {
             .with(CONNECTED_EAST,false)
             .with(CONNECTED_SOUTH, true)
             .with(CONNECTED_WEST, false));
-	}
+    }
+    
+    
 
     public BlockState getPlacementState(ItemPlacementContext ctx) {
         Direction facing =ctx.getSide().getOpposite(); 
@@ -75,7 +70,7 @@ public class PipeBlock extends BlockWithEntity {
             .with(CONNECTED_EAST, isConnected(facing, blockView,blockPos.east(), Direction.EAST))
             .with(CONNECTED_SOUTH, isConnected(facing, blockView,blockPos.south(), Direction.SOUTH))
             .with(CONNECTED_WEST, isConnected(facing, blockView,blockPos.west(), Direction.WEST));
-        log(Level.INFO, "Setting Default pipe state to :" + state.toString());
+        
         return state;
     }
 
@@ -86,8 +81,7 @@ public class PipeBlock extends BlockWithEntity {
 
         if (facing == direction) {
             return true;
-        } else if (block instanceof PipeBlock) {
-            log(Level.INFO, " We have a pipe. Facing: " + state.get(FACING).toString() + " Direction = "+ direction.toString());
+        } else if (block instanceof PipeBlock) {            
             return (state.get(FACING) == direction.getOpposite());
         }
         else {
@@ -96,9 +90,7 @@ public class PipeBlock extends BlockWithEntity {
     }
 
     public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState newState, WorldAccess world, BlockPos pos, BlockPos posFrom) {
-        log( Level.INFO, "Direction: " + direction.toString());
-        log( Level.INFO, "Pos: " + pos.toShortString());
-        log( Level.INFO, "NewFrom:" + posFrom.toShortString());
+        
         Direction facing = state.get(FACING);
         switch (direction) {
             case UP:
@@ -153,6 +145,7 @@ public class PipeBlock extends BlockWithEntity {
 
     @Override
     public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+        
         if (!state.isOf(newState.getBlock())) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof PipeEntity) {

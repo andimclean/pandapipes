@@ -2,6 +2,7 @@ package uk.co.pandagrove;
 
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
+import net.fabricmc.fabric.api.tool.attribute.v1.FabricToolTags;
 import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.ItemGroup;
@@ -12,7 +13,7 @@ import uk.co.pandagrove.pipe.PipeEntity;
 import uk.co.pandagrove.pipe.PipeItem;
 
 public class PandaRegistry {
-    public static final PipeBlock PIPE_BLOCK = new PipeBlock(FabricBlockSettings.of(Material.METAL));
+    public static final PipeBlock PIPE_BLOCK = new PipeBlock(FabricBlockSettings.of(Material.METAL).hardness(2.0f).breakByTool(FabricToolTags.PICKAXES,0));
     public static final PipeItem PIPE_ITEM = new PipeItem(PIPE_BLOCK,new FabricItemSettings().group(ItemGroup.REDSTONE));
 	public static BlockEntityType<PipeEntity> PIPE_BLOCK_ENTITY = null;
 
